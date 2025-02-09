@@ -1,83 +1,50 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ファイルアップロード</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-    }
-    .form-container {
-      display: flex;
-      justify-content: center;
-      margin-top: 20px;
-    }
-    form {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    input[type="file"] {
-      margin-bottom: 10px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-  </style>
+  <title>QRコードファイル共有</title>
 </head>
 <body>
-
-  <h1>ファイルアップロード</h1>
-  <div class="form-container">
-    <form id="uploadForm" action="/api/upload" method="POST" enctype="multipart/form-data">
-      <input type="file" name="file" required />
-      <button type="submit">アップロード</button>
-    </form>
-  </div>
-
-  <div id="result" style="display: none; text-align: center; margin-top: 20px;">
-    <h2>ファイルがアップロードされました！</h2>
-    <p>QRコードをスキャンするとファイルをダウンロードできます。</p>
-    <img id="qrCode" alt="QR Code" />
-    <br>
-    <a id="downloadLink" href="" download>ファイルをダウンロード</a>
+  <h1>ファイルアップロードとQRコード生成</h1>
+  <form id="uploadForm">
+    <input type="file" id="fileInput" required />
+    <button type="submit">アップロード</button>
+  </form>
+  <div id="result" style="display: none;">
+    <h2>アップロード成功！</h2>
+    <p><strong>ダウンロードリンク:</strong> <a id="fileLink" href="#" target="_blank">ここをクリック</a></p>
+    <h3>QRコード</h3>
+    <img id="qrCode" alt="QRコード" />
   </div>
 
   <script>
-    // フォームの送信をキャプチャして、AJAXで送信
-    document.getElementById('uploadForm').addEventListener('submit', function (e) {
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      if (!file) return alert('ファイルを選択してください。');
 
-      let formData = new FormData(this);
-      fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        // QRコードとダウンロードリンクを表示
-        document.getElementById('result').style.display = 'block';
-        document.getElementById('qrCode').src = data.qrCodeDataUrl;
-        document.getElementById('downloadLink').href = data.downloadUrl;
-      })
-      .catch(error => {
-        alert('アップロードに失敗しました。');
-      });
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64File = reader.result.split(',')[1]; // base64データのみ抽出
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file: base64File, fileName: file.name })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById('fileLink').href = data.fileUrl;
+          document.getElementById('qrCode').src = data.qrCodeDataUrl;
+          document.getElementById('result').style.display = 'block';
+        } else {
+          alert('アップロードに失敗しました。');
+        }
+      };
+      reader.readAsDataURL(file);
     });
   </script>
-
 </body>
 </html>
