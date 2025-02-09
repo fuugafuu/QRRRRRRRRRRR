@@ -25,25 +25,22 @@
       const file = fileInput.files[0];
       if (!file) return alert('ファイルを選択してください！');
 
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64File = reader.result.split(',')[1];
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ file: base64File, fileName: file.name })
-        });
+      const formData = new FormData();
+      formData.append('file', file);
 
-        if (response.ok) {
-          const data = await response.json();
-          document.getElementById('fileLink').href = data.fileUrl;
-          document.getElementById('qrCode').src = data.qrCodeDataUrl;
-          document.getElementById('result').style.display = 'block';
-        } else {
-          alert('アップロードに失敗しました。');
-        }
-      };
-      reader.readAsDataURL(file);
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        document.getElementById('fileLink').href = data.fileUrl;
+        document.getElementById('qrCode').src = data.qrCodeDataUrl;
+        document.getElementById('result').style.display = 'block';
+      } else {
+        alert('アップロードに失敗しました。');
+      }
     });
   </script>
 </body>
