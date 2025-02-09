@@ -3,32 +3,31 @@ import path from 'path';
 import QRCode from 'qrcode';
 
 export default async function handler(req, res) {
-  try {
-    if (req.method === 'POST') {
-      const uploadDir = path.join(process.cwd(), 'uploads');
+  if (req.method === 'POST') {
+    try {
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
 
-      // アップロードディレクトリがなければ作成
+      // アップロード先ディレクトリを作成
       await fs.mkdir(uploadDir, { recursive: true });
 
-      // ファイルをアップロードディレクトリに保存
-      const file = req.body.file;  // フロントエンドから送られるbase64ファイル
-      const fileName = `${Date.now()}_${req.body.fileName}`;
+      // ファイルを保存
+      const { file, fileName } = req.body;
       const filePath = path.join(uploadDir, fileName);
       await fs.writeFile(filePath, Buffer.from(file, 'base64'));
 
-      // ファイルのダウンロードリンクを作成
+      // ダウンロードリンクを生成
       const fileUrl = `${req.headers.origin}/uploads/${fileName}`;
 
-      // QRコードを生成
+      // QRコード生成
       const qrCodeDataUrl = await QRCode.toDataURL(fileUrl);
 
-      // 成功レスポンス
-      res.status(200).json({ message: 'ファイルがアップロードされました', fileUrl, qrCodeDataUrl });
-    } else {
-      res.status(405).json({ message: 'Method Not Allowed' });
+      // 成功レスポンスを返す
+      res.status(200).json({ fileUrl, qrCodeDataUrl });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'ファイルアップロード中にエラーが発生しました。' });
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'サーバーエラーが発生しました。' });
+  } else {
+    res.status(405).json({ message: 'Method Not Allowed' });
   }
 }
