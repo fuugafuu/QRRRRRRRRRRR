@@ -6,14 +6,14 @@
   <title>QRコードファイル共有</title>
 </head>
 <body>
-  <h1>ファイルアップロードとQRコード生成</h1>
+  <h1>QRコードでファイル共有</h1>
   <form id="uploadForm">
     <input type="file" id="fileInput" required />
     <button type="submit">アップロード</button>
   </form>
   <div id="result" style="display: none;">
     <h2>アップロード成功！</h2>
-    <p><strong>ダウンロードリンク:</strong> <a id="fileLink" href="#" target="_blank">ここをクリック</a></p>
+    <p>ダウンロードリンク: <a id="fileLink" href="#" target="_blank">ここをクリック</a></p>
     <h3>QRコード</h3>
     <img id="qrCode" alt="QRコード" />
   </div>
@@ -23,11 +23,11 @@
       e.preventDefault();
       const fileInput = document.getElementById('fileInput');
       const file = fileInput.files[0];
-      if (!file) return alert('ファイルを選択してください。');
+      if (!file) return alert('ファイルを選択してください！');
 
       const reader = new FileReader();
       reader.onload = async () => {
-        const base64File = reader.result.split(',')[1]; // base64データのみ抽出
+        const base64File = reader.result.split(',')[1];
         const response = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
